@@ -2,6 +2,7 @@
 // Stage 2: read endpoints with 404
 // Stage 3: create with validation
 // Stage 4: full CRUD
+// Stage 5: Swagger UI
 
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
