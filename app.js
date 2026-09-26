@@ -1,3 +1,6 @@
+// Stage 1: root and health endpoints
+
+
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const app = express();
