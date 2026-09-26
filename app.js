@@ -1,5 +1,6 @@
 // Stage 1: root and health endpoints
 // Stage 2: read endpoints with 404
+// Stage 3: create with validation
 
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
