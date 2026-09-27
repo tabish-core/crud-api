@@ -1,6 +1,14 @@
 # Task API
 
-A small CRUD API for managing a to-do list, built with Node.js + Express.
+A CRUD API for managing a to-do list, built with Node.js + Express + SQLite.
+
+## Why SQLite
+
+SQLite stores the whole database in a single file (`tasks.db`). No server to install, no setup — perfect for a small API. Data survives server restarts, which in-memory storage can't do.
+
+## Where the database lives
+
+`tasks.db` in the project root. Created automatically on first run.
 
 ## Install & run
 
@@ -31,19 +39,28 @@ Server runs at http://localhost:3000 — Swagger UI at http://localhost:3000/doc
 - 400 — invalid body
 - 404 — task id not found
 
-## Example: curl -i output
+## Example curl output
 
 ```
 $ curl -i http://localhost:3000/tasks/1
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
-Content-Length: 45
 
 {"id":1,"title":"Buy milk","done":false}
 ```
 
+## Example SQL query
+
+```sql
+SELECT * FROM tasks WHERE done = 1;
+```
+
+Returns only completed tasks.
+
+## Database viewer
+
+![Database screenshot](./database.png)
+
 ## Swagger UI
 
 ![Swagger screenshot](./swagger.png)
-
-All endpoints visible at `/docs`, full CRUD cycle works via "Try it out".

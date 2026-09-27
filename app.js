@@ -1,24 +1,32 @@
-// Stage 1: root and health endpoints
-// Stage 2: read endpoints with 404
-// Stage 3: create with validation
-// Stage 4: full CRUD
-// Stage 5: Swagger UI
-// Stage 6: publish and docs
-
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
+const Database = require('better-sqlite3');
+
 const app = express();
 const PORT = 3000;
+const db = new Database('tasks.db');
 
 app.use(express.json());
 
-let tasks = [
-  { id: 1, title: 'Buy milk', done: false },
-  { id: 2, title: 'Walk dog', done: true },
-  { id: 3, title: 'Write code', done: false }
-];
-let nextId = 4;
+// --- Create table if missing ---
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    done INTEGER DEFAULT 0
+  )
+`);
 
+// --- Seed 3 tasks only if empty ---
+const count = db.prepare('SELECT COUNT(*) AS c FROM tasks').get().c;
+if (count === 0) {
+  const insert = db.prepare('INSERT INTO tasks (title, done) VALUES (?, ?)');
+  insert.run('Buy milk', 0);
+  insert.run('Walk dog', 1);
+  insert.run('Write code', 0);
+}
+
+// --- Root + health ---
 app.get('/', (req, res) => {
   res.json({ name: 'Task API', version: '1.0', endpoints: ['/tasks'] });
 });
@@ -27,59 +35,67 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// --- Read ---
 app.get('/tasks', (req, res) => {
-  res.json(tasks);
+  const tasks = db.prepare('SELECT * FROM tasks').all();
+  res.json(tasks.map(t => ({ ...t, done: !!t.done })));
 });
 
 app.get('/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const task = tasks.find(t => t.id === id);
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
   if (!task) return res.status(404).json({ error: `Task ${id} not found` });
-  res.json(task);
+  res.json({ ...task, done: !!task.done });
 });
 
+// --- Create ---
 app.post('/tasks', (req, res) => {
   const { title } = req.body;
   if (!title || typeof title !== 'string' || title.trim() === '') {
     return res.status(400).json({ error: 'Title is required and must be a non-empty string' });
   }
-  const task = { id: nextId++, title: title.trim(), done: false };
-  tasks.push(task);
-  res.status(201).json(task);
+  const info = db.prepare('INSERT INTO tasks (title, done) VALUES (?, 0)').run(title.trim());
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(info.lastInsertRowid);
+  res.status(201).json({ ...task, done: !!task.done });
 });
 
+// --- Update ---
 app.put('/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const task = tasks.find(t => t.id === id);
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
   if (!task) return res.status(404).json({ error: `Task ${id} not found` });
 
   const { title, done } = req.body;
   if (title === undefined && done === undefined) {
     return res.status(400).json({ error: 'Provide title and/or done' });
   }
+
   if (title !== undefined) {
     if (typeof title !== 'string' || title.trim() === '') {
       return res.status(400).json({ error: 'Title must be a non-empty string' });
     }
-    task.title = title.trim();
   }
-  if (done !== undefined) {
-    if (typeof done !== 'boolean') {
-      return res.status(400).json({ error: 'done must be true or false' });
-    }
-    task.done = done;
+  if (done !== undefined && typeof done !== 'boolean') {
+    return res.status(400).json({ error: 'done must be true or false' });
   }
-  res.json(task);
+
+  const newTitle = title !== undefined ? title.trim() : task.title;
+  const newDone = done !== undefined ? (done ? 1 : 0) : task.done;
+
+  db.prepare('UPDATE tasks SET title = ?, done = ? WHERE id = ?').run(newTitle, newDone, id);
+  const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+  res.json({ ...updated, done: !!updated.done });
 });
 
+// --- Delete ---
 app.delete('/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = tasks.findIndex(t => t.id === id);
-  if (idx === -1) return res.status(404).json({ error: `Task ${id} not found` });
-  tasks.splice(idx, 1);
+  const info = db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+  if (info.changes === 0) return res.status(404).json({ error: `Task ${id} not found` });
   res.status(204).send();
 });
 
+// --- Swagger ---
 const openapi = {
   openapi: '3.0.0',
   info: { title: 'Task API', version: '1.0' },
