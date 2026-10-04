@@ -1,3 +1,24 @@
+## Docker + PostgreSQL
+
+Runs Postgres in Docker with a named volume. Connection string comes from `.env` (gitignored) — see `.env.example`.
+
+### Run
+
+docker compose up
+
+App: http://localhost:3000 — Swagger: http://localhost:3000/docs
+
+### Persistence check
+
+1. POST a task via Swagger or curl
+2. docker compose down
+3. docker compose up
+4. GET /tasks — the task is still there
+
+### Architecture note
+
+The service and route layer did not change between A2 (SQLite) and A3 (Postgres). Same endpoints, same request bodies, same responses. Only the storage layer swapped.
+
 # Task API
 
 A CRUD API for managing a to-do list, built with Node.js + Express + SQLite.
