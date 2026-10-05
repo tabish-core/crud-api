@@ -1,3 +1,13 @@
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandled rejection:', reason);
+  if (reason && reason.cause) console.error('[process] rejection cause:', reason.cause);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[process] uncaught exception:', err);
+  if (err && err.cause) console.error('[process] exception cause:', err.cause);
+});
+
 require('dotenv').config();
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
@@ -109,28 +119,30 @@ const STUB_RESPONSE = {
 };
 
 app.post('/triage', async (req, res) => {
-  const parsed = TriageInputSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({
-      error: 'Invalid input',
-      field: parsed.error.issues[0].path[0],
-      message: parsed.error.issues[0].message,
-    });
-  }
-
-  if (process.env.LLM_ENABLED === 'false') {
-    return res.status(503).json({ error: 'LLM disabled' });
-  }
-
-  if (process.env.LLM_STUB === '1') {
-    return res.json(STUB_RESPONSE);
-  }
-
   try {
+    const parsed = TriageInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid input',
+        field: parsed.error.issues[0].path[0],
+        message: parsed.error.issues[0].message,
+      });
+    }
+
+    if (process.env.LLM_ENABLED === 'false') {
+      return res.status(503).json({ error: 'LLM disabled' });
+    }
+
+    if (process.env.LLM_STUB === '1') {
+      return res.json(STUB_RESPONSE);
+    }
+
     const result = await classify(parsed.data.text);
-    res.json(result);
+    return res.json(result);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message });
+    console.error('[triage] error:', err);
+    if (err && err.cause) console.error('[triage] error cause:', err.cause);
+    return res.status((err && err.status) || 500).json({ error: err && err.message ? err.message : 'Internal server error' });
   }
 });
 
