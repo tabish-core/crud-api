@@ -1,0 +1,10 @@
+[
+  { "input": "My card was declined twice this morning, I need this fixed now", "expected": "billing" },
+  { "input": "The export button on the dashboard gives a 500 error", "expected": "bug" },
+  { "input": "It would be great if you added dark mode", "expected": "feature" },
+  { "input": "Where can I download my invoices?", "expected": "billing" },
+  { "input": "The site is completely down, nobody can log in", "expected": "bug" },
+  { "input": "Can you add a CSV export to the reports page?", "expected": "feature" },
+  { "input": "hello??", "expected": "other" },
+  { "input": "asdfghjkl", "expected": "other" }
+]
