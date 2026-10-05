@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const { Pool } = require('pg');
+const { TriageInputSchema } = require('./src/llm/schema');
+const { classify } = require('./src/llm/validate');
 
 const app = express();
 const PORT = 3000;
@@ -98,6 +100,39 @@ const openapi = {
     }
   }
 };
+
+const STUB_RESPONSE = {
+  category: 'other',
+  urgency: 'normal',
+  confidence: 0.5,
+  reason: 'stub response',
+};
+
+app.post('/triage', async (req, res) => {
+  const parsed = TriageInputSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'Invalid input',
+      field: parsed.error.issues[0].path[0],
+      message: parsed.error.issues[0].message,
+    });
+  }
+
+  if (process.env.LLM_ENABLED === 'false') {
+    return res.status(503).json({ error: 'LLM disabled' });
+  }
+
+  if (process.env.LLM_STUB === '1') {
+    return res.json(STUB_RESPONSE);
+  }
+
+  try {
+    const result = await classify(parsed.data.text);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
 
