@@ -25,7 +25,6 @@ This API uses **Supabase** as an Identity Provider. Users can sign up, log in, a
 
 ![Swagger Auth Screenshot](./swagger-auth.png)
 
-
 # Task API + LLM Triage
 
 A CRUD API for managing a to-do list, plus an LLM-backed endpoint that classifies customer support messages into clean structured JSON.
