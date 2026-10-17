@@ -1,3 +1,31 @@
+# Task API (Auth + CRUD + LLM)
+
+> **Note for evaluators:** Same repo grown across assignments: A1–A2 (CRUD + SQLite), A3 (Postgres in Docker), A17 (LLM `/triage` endpoint), BE-03 (Supabase Auth).
+
+## Auth API (Supabase)
+
+This API uses **Supabase** as an Identity Provider. Users can sign up, log in, and receive a JWT. Protected routes require this token in the `Authorization: Bearer <token>` header.
+
+### Auth Endpoints
+
+| Method | Path | Auth Required? | Description |
+|--------|------|----------------|-------------|
+| POST | `/auth/signup` | No | Register a new user |
+| POST | `/auth/login` | No | Log in and get a JWT |
+| POST | `/auth/logout` | Yes | Invalidate the JWT |
+| GET | `/public/info` | No | Public test route |
+| GET | `/protected/profile` | Yes | Get your user profile |
+
+### How to test locally
+
+1. Copy `.env.example` to `.env` and add your Supabase URL and Key.
+2. Run `docker compose up`.
+3. Go to `http://localhost:3000/docs`.
+4. Sign up, log in, grab the `access_token`, and click the green **Authorize** button in Swagger to test protected routes.
+
+![Swagger Auth Screenshot](./swagger-auth.png)
+
+
 # Task API + LLM Triage
 
 A CRUD API for managing a to-do list, plus an LLM-backed endpoint that classifies customer support messages into clean structured JSON.

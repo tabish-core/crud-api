@@ -103,6 +103,15 @@ app.delete('/tasks/:id', async (req, res) => {
 const openapi = {
   openapi: '3.0.0',
   info: { title: 'Task API', version: '1.0' },
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
   paths: {
     '/tasks': {
       get: { summary: 'List all tasks', responses: { 200: { description: 'OK' } } },
@@ -112,6 +121,46 @@ const openapi = {
       get: { summary: 'Get one task', responses: { 200: { description: 'OK' }, 404: { description: 'Not Found' } } },
       put: { summary: 'Update a task', responses: { 200: { description: 'OK' }, 400: { description: 'Bad Request' }, 404: { description: 'Not Found' } } },
       delete: { summary: 'Delete a task', responses: { 204: { description: 'No Content' }, 404: { description: 'Not Found' } } }
+    },
+        '/auth/signup': {
+      post: {
+        summary: 'Register a new user',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' } } } } }
+        },
+        responses: { 201: { description: 'Created' }, 400: { description: 'Bad Request' } }
+      }
+    },
+    '/auth/login': {
+      post: {
+        summary: 'Log in and get a JWT',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' } } } } }
+        },
+        responses: { 200: { description: 'OK' }, 401: { description: 'Unauthorized' } }
+      }
+    },
+    '/auth/logout': {
+      post: {
+        summary: 'Log out',
+        security: [{ bearerAuth: [] }], // This adds the lock icon
+        responses: { 204: { description: 'No Content' }, 401: { description: 'Unauthorized' } }
+      }
+    },
+    '/public/info': {
+      get: {
+        summary: 'Public info (no auth)',
+        responses: { 200: { description: 'OK' } }
+      }
+    },
+    '/protected/profile': {
+      get: {
+        summary: 'Get user profile (requires auth)',
+        security: [{ bearerAuth: [] }], // This adds the lock icon
+        responses: { 200: { description: 'OK' }, 401: { description: 'Unauthorized' } }
+      }
     }
   }
 };
