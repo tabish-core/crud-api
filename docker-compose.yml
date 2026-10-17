@@ -30,6 +30,8 @@ services:
       LLM_MODEL: openrouter/free
       LLM_STUB: "0"
       LLM_ENABLED: "true"
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
 
 volumes:
   pgdata:

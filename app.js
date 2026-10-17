@@ -1,3 +1,8 @@
+const authRoutes = require('./src/routes/auth');
+const { requireAuth } = require('./src/middleware/auth');
+
+
+
 process.on('unhandledRejection', (reason) => {
   console.error('[process] unhandled rejection:', reason);
   if (reason && reason.cause) console.error('[process] rejection cause:', reason.cause);
@@ -144,6 +149,37 @@ app.post('/triage', async (req, res) => {
     if (err && err.cause) console.error('[triage] error cause:', err.cause);
     return res.status((err && err.status) || 500).json({ error: err && err.message ? err.message : 'Internal server error' });
   }
+});
+
+
+
+// Auth routes
+app.use('/auth', authRoutes);
+
+// Public route (no auth)
+app.get('/public/info', (req, res) => {
+  res.json({ message: 'Welcome stranger! This info is public.' });
+});
+
+// Protected route (needs auth)
+app.get('/protected/profile', requireAuth, (req, res) => {
+  res.json({
+    id: req.user.id,
+    email: req.user.email,
+    created_at: req.user.created_at,
+  });
+});
+
+// Bonus protected route to test middleware
+app.get('/protected/dashboard', requireAuth, (req, res) => {
+  res.json({ message: `Welcome to the dashboard, ${req.user.email}!` });
+});
+
+// Logout
+app.post('/auth/logout', requireAuth, async (req, res) => {
+  const supabase = require('./src/llm/supabase');
+  await supabase.auth.signOut(req.token);
+  res.status(204).send();
 });
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
